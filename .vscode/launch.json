@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "GDB 运行",
+      "type": "gdbtarget",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/build/Debug/${workspaceFolderBasename}.elf",
+      "initCommands": ["monitor reset halt", "load", "monitor reset", "quit"],
+      "target": {
+        "server": "pyocd",
+        "port": "3333",
+        "serverParameters": ["gdbserver", "--target", "STM32F407ZGTx"]
+      },
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "GDB 调试",
+      "type": "gdbtarget",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/build/Debug/${workspaceFolderBasename}.elf",
+      "initCommands": [
+        "monitor reset halt",
+        "load",
+        "maintenance flush register-cache",
+        "hbreak main"
+      ],
+      "target": {
+        "server": "pyocd",
+        "port": "3333",
+        "serverParameters": ["gdbserver", "--target", "STM32F407ZGTx"]
+      }
+    }
+  ]
+}
