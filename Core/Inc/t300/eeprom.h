@@ -5,8 +5,8 @@
 
 #define EEPROM_DEVICE_ADDRESS 0x50 << 1
 
-uint8_t eeprom_ready();
-uint8_t eeprom_read_byte(uint8_t address, uint8_t *data);
-uint8_t eeprom_write_byte(uint8_t address, uint8_t data);
+uint8_t EEPROM_Ready();
+uint8_t EEPROM_ReadByte(uint8_t address, uint8_t *data);
+uint8_t EEPROM_WriteByte(uint8_t address, uint8_t data);
 
 #endif

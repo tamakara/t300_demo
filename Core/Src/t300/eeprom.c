@@ -1,6 +1,6 @@
 #include "t300/eeprom.h"
 
-uint8_t eeprom_ready() {
+uint8_t EEPROM_Ready() {
   HAL_StatusTypeDef state =
       HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_DEVICE_ADDRESS, 10, HAL_MAX_DELAY);
   if (state != HAL_OK) {
@@ -9,7 +9,7 @@ uint8_t eeprom_ready() {
   return 1; // Ready
 }
 
-uint8_t eeprom_read_byte(uint8_t address, uint8_t *data) {
+uint8_t EEPROM_ReadByte(uint8_t address, uint8_t *data) {
   HAL_StatusTypeDef state = HAL_I2C_Mem_Read(
       &hi2c1,
       EEPROM_DEVICE_ADDRESS,
@@ -24,7 +24,7 @@ uint8_t eeprom_read_byte(uint8_t address, uint8_t *data) {
   return 0;
 }
 
-uint8_t eeprom_write_byte(uint8_t address, uint8_t data) {
+uint8_t EEPROM_WriteByte(uint8_t address, uint8_t data) {
   HAL_StatusTypeDef state = HAL_I2C_Mem_Write(
       &hi2c1,
       EEPROM_DEVICE_ADDRESS,

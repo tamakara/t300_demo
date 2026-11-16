@@ -21,12 +21,16 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "spi.h"
+#include "stm32f4xx_hal_def.h"
 #include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "t300/debug.h"
 #include "t300/eeprom.h"
+#include "t300/flash.h"
+#include <stdint.h>
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -60,32 +64,60 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void eeprom_main(void) {
-  char line[16], operation[6];
-  int num_args;
+  char line[20], operation[20];
+
   uint8_t address, data;
 
   while (1) {
     if (uart_getline(line, sizeof(line)) == EOF)
       continue;
-
-    num_args = sscanf(line, "%5s %hhx %hhx", operation, &address, &data);
-
-    if (num_args == 3 && strcmp(operation, "write") == 0) {
-      if (eeprom_write_byte(address, data) != 0) {
-        printf("Failed to write to EEPROM.\r\n");
+    sscanf(line, "%s", operation);
+    if (strcmp(operation, "read") == 0) {
+      sscanf(line, "%s %hhx", operation, &address);
+      if (EEPROM_ReadByte(address, &data) == 0) {
+        printf("Read EPPROM[0x%02X]=0x%02X\r\n", address, data);
       } else {
-        printf("Wrote 0x%02X to address 0x%02X.\r\n", data, address);
+        printf("Failed to read.\r\n");
       }
-    } else if (num_args == 2 && strcmp(operation, "read") == 0) {
-      if (eeprom_read_byte(address, &data) != 0) {
-        printf("Failed to read from EEPROM.\r\n");
+    } else if (strcmp(operation, "write") == 0) {
+      sscanf(line, "%s %hhx %hhx", operation, &address, &data);
+      if (EEPROM_WriteByte(address, data) == 0) {
+        printf("Write EPPROM[0x%02X]=0x%02X\r\n", address, data);
       } else {
-        printf("Read 0x%02X from address 0x%02X.\r\n", data, address);
+        printf("Failed to write.\r\n");
       }
     } else {
-      printf(
-          "Invalid command. Use 'write <address> <data>' or 'read "
-          "<address>'.\r\n");
+      printf("Invalid command. \r\n");
+    }
+  }
+}
+
+void flash_main() {
+  char line[20], operation[20];
+  uint32_t address;
+  uint8_t data;
+
+  while (1) {
+    if (uart_getline(line, sizeof(line)) == EOF)
+      continue;
+
+    sscanf(line, "%s", operation);
+    if (strcmp(operation, "read") == 0) {
+      sscanf(line, "%s %x", operation, &address);
+      FLASH_Read(address, &data, 1);
+      printf("Read FLASH[0x%06X]=0x%02X\r\n", address, data);
+    } else if (strcmp(operation, "write") == 0) {
+      sscanf(line, "%s %x %hhx", operation, &address, &data);
+      FLASH_Write(address, &data, 1);
+      printf("Write FLASH[0x%06x]=0x%02x\r\n", address, data);
+    } else if (strcmp(operation, "erase") == 0) {
+      sscanf(line, "%s %x", operation, &address);
+      FLASH_EraseSector(address);
+      uint32_t start = address & ~(FLASH_SECTOR_SIZE - 1);
+      uint32_t end = start + FLASH_SECTOR_SIZE - 1;
+      printf("Erase FLASH[0x%06X-0x%06X]=0xFF\r\n", start, end);
+    } else {
+      printf("Invalid command. \r\n");
     }
   }
 }
@@ -130,7 +162,8 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  eeprom_main();
+  // eeprom_main();
+  flash_main();
 
   while (1) {
     /* USER CODE END WHILE */
