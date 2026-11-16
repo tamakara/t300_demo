@@ -47,6 +47,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Core/Src/t300/debug.c
     Core/Src/t300/eeprom.c
+    Core/Src/t300/flash.c
 )
 
 # Add include paths

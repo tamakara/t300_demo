@@ -69,6 +69,8 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOF
 #define KEY_UP_Pin GPIO_PIN_0
 #define KEY_UP_GPIO_Port GPIOA
+#define FLASH_CS_Pin GPIO_PIN_14
+#define FLASH_CS_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

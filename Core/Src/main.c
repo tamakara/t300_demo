@@ -20,6 +20,7 @@
 #include "main.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "spi.h"
 #include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -58,6 +59,36 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void eeprom_main(void) {
+  char line[16], operation[6];
+  int num_args;
+  uint8_t address, data;
+
+  while (1) {
+    if (uart_getline(line, sizeof(line)) == EOF)
+      continue;
+
+    num_args = sscanf(line, "%5s %hhx %hhx", operation, &address, &data);
+
+    if (num_args == 3 && strcmp(operation, "write") == 0) {
+      if (eeprom_write_byte(address, data) != 0) {
+        printf("Failed to write to EEPROM.\r\n");
+      } else {
+        printf("Wrote 0x%02X to address 0x%02X.\r\n", data, address);
+      }
+    } else if (num_args == 2 && strcmp(operation, "read") == 0) {
+      if (eeprom_read_byte(address, &data) != 0) {
+        printf("Failed to read from EEPROM.\r\n");
+      } else {
+        printf("Read 0x%02X from address 0x%02X.\r\n", data, address);
+      }
+    } else {
+      printf(
+          "Invalid command. Use 'write <address> <data>' or 'read "
+          "<address>'.\r\n");
+    }
+  }
+}
 
 /* USER CODE END 0 */
 
@@ -92,41 +123,19 @@ int main(void) {
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_I2C1_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  char line[16], operation[6];
-  int num_args;
-  uint8_t address, data;
+  eeprom_main();
+
   while (1) {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if (uart_getline(line, sizeof(line)) == EOF)
-      continue;
-
-    num_args = sscanf(line, "%5s %hhx %hhx", operation, &address, &data);
-
-    if (num_args == 3 && strcmp(operation, "write") == 0) {
-      if (eeprom_write_byte(address, data) != 0) {
-        printf("Failed to write to EEPROM.\r\n");
-      } else {
-        printf("Wrote 0x%02X to address 0x%02X.\r\n", data, address);
-      }
-    } else if (num_args == 2 && strcmp(operation, "read") == 0) {
-      if (eeprom_read_byte(address, &data) != 0) {
-        printf("Failed to read from EEPROM.\r\n");
-      } else {
-        printf("Read 0x%02X from address 0x%02X.\r\n", data, address);
-      }
-    } else {
-      printf(
-          "Invalid command. Use 'write <address> <data>' or 'read "
-          "<address>'.\r\n");
-    }
   }
   /* USER CODE END 3 */
 }
