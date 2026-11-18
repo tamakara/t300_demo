@@ -1,5 +1,4 @@
 #include "t300/aht20.h"
-#include "stm32f4xx_hal_def.h"
 
 uint8_t AHT20_Ready() {
   HAL_StatusTypeDef state =

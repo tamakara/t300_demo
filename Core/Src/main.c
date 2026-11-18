@@ -138,7 +138,9 @@ void flash_main() {
 }
 
 void aht20_main() {
-  if (AHT20_Init() == 0) {
+  if (AHT20_Init()) {
+    printf("AHT20 Init Success!\r\n");
+  } else {
     printf("AHT20 Init Failed!\r\n");
     return;
   }
@@ -157,24 +159,27 @@ void aht20_main() {
 }
 
 void bmp280_main() {
-  BMP280_CalibData calib;
+  if (BMP280_Init()) {
+    printf("BMP280 Init Success!\r\n");
+  } else {
+    printf("BMP280 Init Failed!\r\n");
+    return;
+  }
 
-  if (BMP280_ReadCalibration(&calib)) {
-    printf("BMP280 Calibration:\r\n");
+  float temperature;
+  float pressure;
 
-    printf("T1: %u\r\n", calib.T1);
-    printf("T2: %d\r\n", calib.T2);
-    printf("T3: %d\r\n", calib.T3);
+  while (1) {
+    if (BMP280_ReadTemperature(&temperature) &&
+        BMP280_ReadPressure(&pressure)) {
+      printf("Temperature: %.2f C\r\n", temperature);
+      printf("Pressure: %.2f Pa\r\n", pressure);
+      printf("----------------------\r\n");
+    } else {
+      printf("BMP280 Read Failed!\r\n");
+    }
 
-    printf("P1: %u\r\n", calib.P1);
-    printf("P2: %d\r\n", calib.P2);
-    printf("P3: %d\r\n", calib.P3);
-    printf("P4: %d\r\n", calib.P4);
-    printf("P5: %d\r\n", calib.P5);
-    printf("P6: %d\r\n", calib.P6);
-    printf("P7: %d\r\n", calib.P7);
-    printf("P8: %d\r\n", calib.P8);
-    printf("P9: %d\r\n", calib.P9);
+    HAL_Delay(1000);
   }
 }
 
@@ -222,7 +227,39 @@ int main(void) {
   // eeprom_main();
   // flash_main();
   // aht20_main();
-  bmp280_main();
+  // bmp280_main();
+
+  if (AHT20_Init()) {
+    printf("AHT20 Init Success!\r\n");
+  } else {
+    printf("AHT20 Init Failed!\r\n");
+  }
+
+  if (BMP280_Init()) {
+    printf("BMP280 Init Success!\r\n");
+  } else {
+    printf("BMP280 Init Failed!\r\n");
+  }
+
+  float temperature;
+  float humidity;
+
+  while (1) {
+    if (AHT20_Read(&temperature, &humidity, HAL_MAX_DELAY)) {
+      printf("AHT20 Temperature: %.2f C\r\n", temperature);
+    } else {
+      printf("AHT20 Read Failed!\r\n");
+    }
+
+    if (BMP280_ReadTemperature(&temperature)) {
+      printf("BMP280 Temperature: %.2f C\r\n", temperature);
+      printf("----------------------\r\n");
+    } else {
+      printf("BMP280 Read Failed!\r\n");
+    }
+
+    HAL_Delay(1000);
+  }
 
   while (1) {
     /* USER CODE END WHILE */
