@@ -21,11 +21,14 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "spi.h"
+#include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 #include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "t300/aht20.h"
+#include "t300/bmp280.h"
 #include "t300/debug.h"
 #include "t300/eeprom.h"
 #include "t300/flash.h"
@@ -63,6 +66,18 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void I2C_Scan(void) {
+  printf("I2C Scan Start\r\n");
+
+  for (uint8_t addr = 1; addr < 127; addr++) {
+    if (HAL_I2C_IsDeviceReady(&hi2c1, addr << 1, 3, HAL_MAX_DELAY) == HAL_OK) {
+      printf("Device Found: 0x%02X\r\n", addr);
+    }
+  }
+
+  printf("I2C Scan Complete\r\n");
+}
+
 void eeprom_main(void) {
   char line[20], operation[20];
 
@@ -122,6 +137,47 @@ void flash_main() {
   }
 }
 
+void aht20_main() {
+  if (AHT20_Init() == 0) {
+    printf("AHT20 Init Failed!\r\n");
+    return;
+  }
+
+  float temperature;
+  float humidity;
+  while (1) {
+    if (AHT20_Read(&temperature, &humidity, HAL_MAX_DELAY)) {
+      printf("Temperature: %.2f C\r\n", temperature);
+      printf("Humidity: %.2f %%RH\r\n", humidity);
+    } else {
+      printf("AHT20 Read Failed!\r\n");
+    }
+    HAL_Delay(1000);
+  }
+}
+
+void bmp280_main() {
+  BMP280_CalibData calib;
+
+  if (BMP280_ReadCalibration(&calib)) {
+    printf("BMP280 Calibration:\r\n");
+
+    printf("T1: %u\r\n", calib.T1);
+    printf("T2: %d\r\n", calib.T2);
+    printf("T3: %d\r\n", calib.T3);
+
+    printf("P1: %u\r\n", calib.P1);
+    printf("P2: %d\r\n", calib.P2);
+    printf("P3: %d\r\n", calib.P3);
+    printf("P4: %d\r\n", calib.P4);
+    printf("P5: %d\r\n", calib.P5);
+    printf("P6: %d\r\n", calib.P6);
+    printf("P7: %d\r\n", calib.P7);
+    printf("P8: %d\r\n", calib.P8);
+    printf("P9: %d\r\n", calib.P9);
+  }
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -162,8 +218,11 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  // I2C_Scan();
   // eeprom_main();
-  flash_main();
+  // flash_main();
+  // aht20_main();
+  bmp280_main();
 
   while (1) {
     /* USER CODE END WHILE */

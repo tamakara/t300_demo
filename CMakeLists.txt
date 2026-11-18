@@ -48,6 +48,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/t300/debug.c
     Core/Src/t300/eeprom.c
     Core/Src/t300/flash.c
+    Core/Src/t300/aht20.c
+    Core/Src/t300/bmp280.c
 )
 
 # Add include paths
