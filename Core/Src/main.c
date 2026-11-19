@@ -170,8 +170,7 @@ void bmp280_main() {
   float pressure;
 
   while (1) {
-    if (BMP280_ReadTemperature(&temperature) &&
-        BMP280_ReadPressure(&pressure)) {
+    if (BMP280_Read(&temperature, &pressure)) {
       printf("Temperature: %.2f C\r\n", temperature);
       printf("Pressure: %.2f Pa\r\n", pressure);
       printf("----------------------\r\n");
@@ -227,39 +226,7 @@ int main(void) {
   // eeprom_main();
   // flash_main();
   // aht20_main();
-  // bmp280_main();
-
-  if (AHT20_Init()) {
-    printf("AHT20 Init Success!\r\n");
-  } else {
-    printf("AHT20 Init Failed!\r\n");
-  }
-
-  if (BMP280_Init()) {
-    printf("BMP280 Init Success!\r\n");
-  } else {
-    printf("BMP280 Init Failed!\r\n");
-  }
-
-  float temperature;
-  float humidity;
-
-  while (1) {
-    if (AHT20_Read(&temperature, &humidity, HAL_MAX_DELAY)) {
-      printf("AHT20 Temperature: %.2f C\r\n", temperature);
-    } else {
-      printf("AHT20 Read Failed!\r\n");
-    }
-
-    if (BMP280_ReadTemperature(&temperature)) {
-      printf("BMP280 Temperature: %.2f C\r\n", temperature);
-      printf("----------------------\r\n");
-    } else {
-      printf("BMP280 Read Failed!\r\n");
-    }
-
-    HAL_Delay(1000);
-  }
+  bmp280_main();
 
   while (1) {
     /* USER CODE END WHILE */
