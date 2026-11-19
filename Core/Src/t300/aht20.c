@@ -37,7 +37,7 @@ uint8_t AHT20_Init() {
   return (status & 0x08) ? 1 : 0;
 }
 
-uint8_t AHT20_ReadRaw(uint8_t *data, uint32_t timeout) {
+uint8_t AHT20_ReadRaw(uint8_t *data) {
   uint8_t cmd[3] = {0xAC, 0x33, 0x00};
 
   if (data == NULL)
@@ -51,7 +51,7 @@ uint8_t AHT20_ReadRaw(uint8_t *data, uint32_t timeout) {
   // 等待测量完成
   uint32_t start = HAL_GetTick();
 
-  while (HAL_GetTick() - start < timeout) {
+  while (HAL_GetTick() - start < HAL_MAX_DELAY) {
     if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, data, 7, 100) != HAL_OK) {
       return 0;
     }
@@ -67,13 +67,13 @@ uint8_t AHT20_ReadRaw(uint8_t *data, uint32_t timeout) {
   return 0;
 }
 
-uint8_t AHT20_Read(float *temperature, float *humidity, uint32_t timeout) {
+uint8_t AHT20_Read(float *temperature, float *humidity) {
   uint8_t data[7];
 
   if (temperature == NULL || humidity == NULL)
     return 0;
 
-  if (!AHT20_ReadRaw(data, timeout))
+  if (!AHT20_ReadRaw(data))
     return 0;
 
   // 提取 20 位湿度原始值

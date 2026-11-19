@@ -8,7 +8,7 @@ uint8_t BMP280_ReadReg(uint8_t address, uint8_t *data, uint8_t size) {
              I2C_MEMADD_SIZE_8BIT,
              data,
              size,
-             HAL_MAX_DELAY) == HAL_OK;
+             100) == HAL_OK;
 }
 
 uint8_t BMP280_WriteReg(uint8_t reg, uint8_t value) {

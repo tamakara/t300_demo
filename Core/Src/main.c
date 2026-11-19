@@ -148,9 +148,10 @@ void aht20_main() {
   float temperature;
   float humidity;
   while (1) {
-    if (AHT20_Read(&temperature, &humidity, HAL_MAX_DELAY)) {
+    if (AHT20_Read(&temperature, &humidity)) {
       printf("Temperature: %.2f C\r\n", temperature);
       printf("Humidity: %.2f %%RH\r\n", humidity);
+      printf("----------------------\r\n");
     } else {
       printf("AHT20 Read Failed!\r\n");
     }
@@ -225,8 +226,8 @@ int main(void) {
   // I2C_Scan();
   // eeprom_main();
   // flash_main();
-  // aht20_main();
-  bmp280_main();
+  aht20_main();
+  // bmp280_main();
 
   while (1) {
     /* USER CODE END WHILE */

@@ -7,6 +7,6 @@
 
 uint8_t AHT20_Ready();
 uint8_t AHT20_Init();
-uint8_t AHT20_ReadRaw(uint8_t *data, uint32_t timeout);
-uint8_t AHT20_Read(float *temperature, float *humidity, uint32_t timeout);
+uint8_t AHT20_ReadRaw(uint8_t *data);
+uint8_t AHT20_Read(float *temperature, float *humidity);
 #endif
