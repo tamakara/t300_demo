@@ -5,3 +5,5 @@ AllowAllArgumentsOnNextLine: false
 AlignAfterOpenBracket: AlwaysBreak
 AlwaysBreakAfterReturnType: None
 PenaltyReturnTypeOnItsOwnLine: 1000
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None

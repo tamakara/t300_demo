@@ -18,11 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "spi.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_def.h"
 #include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -32,8 +31,6 @@
 #include "t300/debug.h"
 #include "t300/eeprom.h"
 #include "t300/flash.h"
-#include <stdint.h>
-#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -66,11 +63,14 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void I2C_Scan(void) {
+void I2C_Scan(void)
+{
   printf("I2C Scan Start\r\n");
 
-  for (uint8_t addr = 1; addr < 127; addr++) {
-    if (HAL_I2C_IsDeviceReady(&hi2c1, addr << 1, 3, HAL_MAX_DELAY) == HAL_OK) {
+  for (uint8_t addr = 1; addr < 127; addr++)
+  {
+    if (HAL_I2C_IsDeviceReady(&hi2c1, addr << 1, 3, HAL_MAX_DELAY) == HAL_OK)
+    {
       printf("Device Found: 0x%02X\r\n", addr);
     }
   }
@@ -78,91 +78,126 @@ void I2C_Scan(void) {
   printf("I2C Scan Complete\r\n");
 }
 
-void eeprom_main(void) {
+void eeprom_main(void)
+{
   char line[20], operation[20];
 
   uint8_t address, data;
 
-  while (1) {
-    if (uart_getline(line, sizeof(line)) == EOF)
-      continue;
+  while (1)
+  {
+    // if (getline(line, sizeof(line)) == EOF)
+    //   continue;
+
     sscanf(line, "%s", operation);
-    if (strcmp(operation, "read") == 0) {
+    if (strcmp(operation, "read") == 0)
+    {
       sscanf(line, "%s %hhx", operation, &address);
-      if (EEPROM_ReadByte(address, &data) == 0) {
+      if (EEPROM_ReadByte(address, &data) == 0)
+      {
         printf("Read EPPROM[0x%02X]=0x%02X\r\n", address, data);
-      } else {
+      }
+      else
+      {
         printf("Failed to read.\r\n");
       }
-    } else if (strcmp(operation, "write") == 0) {
+    }
+    else if (strcmp(operation, "write") == 0)
+    {
       sscanf(line, "%s %hhx %hhx", operation, &address, &data);
-      if (EEPROM_WriteByte(address, data) == 0) {
+      if (EEPROM_WriteByte(address, data) == 0)
+      {
         printf("Write EPPROM[0x%02X]=0x%02X\r\n", address, data);
-      } else {
+      }
+      else
+      {
         printf("Failed to write.\r\n");
       }
-    } else {
+    }
+    else
+    {
       printf("Invalid command. \r\n");
     }
   }
 }
 
-void flash_main() {
+void flash_main()
+{
   char line[20], operation[20];
   uint32_t address;
   uint8_t data;
 
-  while (1) {
-    if (uart_getline(line, sizeof(line)) == EOF)
-      continue;
+  while (1)
+  {
+    // if (getline(line, sizeof(line)) == EOF)
+    //   continue;
 
     sscanf(line, "%s", operation);
-    if (strcmp(operation, "read") == 0) {
+    if (strcmp(operation, "read") == 0)
+    {
       sscanf(line, "%s %x", operation, &address);
       FLASH_Read(address, &data, 1);
       printf("Read FLASH[0x%06X]=0x%02X\r\n", address, data);
-    } else if (strcmp(operation, "write") == 0) {
+    }
+    else if (strcmp(operation, "write") == 0)
+    {
       sscanf(line, "%s %x %hhx", operation, &address, &data);
       FLASH_Write(address, &data, 1);
       printf("Write FLASH[0x%06x]=0x%02x\r\n", address, data);
-    } else if (strcmp(operation, "erase") == 0) {
+    }
+    else if (strcmp(operation, "erase") == 0)
+    {
       sscanf(line, "%s %x", operation, &address);
       FLASH_EraseSector(address);
       uint32_t start = address & ~(FLASH_SECTOR_SIZE - 1);
       uint32_t end = start + FLASH_SECTOR_SIZE - 1;
       printf("Erase FLASH[0x%06X-0x%06X]=0xFF\r\n", start, end);
-    } else {
+    }
+    else
+    {
       printf("Invalid command. \r\n");
     }
   }
 }
 
-void aht20_main() {
-  if (AHT20_Init()) {
+void aht20_main()
+{
+  if (AHT20_Init())
+  {
     printf("AHT20 Init Success!\r\n");
-  } else {
+  }
+  else
+  {
     printf("AHT20 Init Failed!\r\n");
     return;
   }
 
   float temperature;
   float humidity;
-  while (1) {
-    if (AHT20_Read(&temperature, &humidity)) {
+  while (1)
+  {
+    if (AHT20_Read(&temperature, &humidity))
+    {
       printf("Temperature: %.2f C\r\n", temperature);
       printf("Humidity: %.2f %%RH\r\n", humidity);
       printf("----------------------\r\n");
-    } else {
+    }
+    else
+    {
       printf("AHT20 Read Failed!\r\n");
     }
     HAL_Delay(1000);
   }
 }
 
-void bmp280_main() {
-  if (BMP280_Init()) {
+void bmp280_main()
+{
+  if (BMP280_Init())
+  {
     printf("BMP280 Init Success!\r\n");
-  } else {
+  }
+  else
+  {
     printf("BMP280 Init Failed!\r\n");
     return;
   }
@@ -170,12 +205,16 @@ void bmp280_main() {
   float temperature;
   float pressure;
 
-  while (1) {
-    if (BMP280_Read(&temperature, &pressure)) {
+  while (1)
+  {
+    if (BMP280_Read(&temperature, &pressure))
+    {
       printf("Temperature: %.2f C\r\n", temperature);
       printf("Pressure: %.2f Pa\r\n", pressure);
       printf("----------------------\r\n");
-    } else {
+    }
+    else
+    {
       printf("BMP280 Read Failed!\r\n");
     }
 
@@ -189,7 +228,8 @@ void bmp280_main() {
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
 
   /* USER CODE BEGIN 1 */
 
@@ -214,6 +254,7 @@ int main(void) {
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
@@ -226,10 +267,12 @@ int main(void) {
   // I2C_Scan();
   // eeprom_main();
   // flash_main();
-  aht20_main();
+  // aht20_main();
   // bmp280_main();
 
-  while (1) {
+  printf("Please input a number: \r\n");
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -241,7 +284,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -261,7 +305,8 @@ void SystemClock_Config(void) {
   RCC_OscInitStruct.PLL.PLLN = 336;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
     Error_Handler();
   }
 
@@ -274,7 +319,8 @@ void SystemClock_Config(void) {
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  {
     Error_Handler();
   }
 
@@ -284,18 +330,24 @@ void SystemClock_Config(void) {
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  Debug_UART_TxCpltCallback(huart);
+}
 /* USER CODE END 4 */
 
 /**
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+  /* User can add his own implementation to report the HAL error return state
+   */
   __disable_irq();
-  while (1) {
+  while (1)
+  {
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -307,11 +359,12 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line) {
+void assert_failed(uint8_t *file, uint32_t line)
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
-     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
-     line) */
+     number, ex: printf("Wrong parameters value: file %s on line %d\r\n",
+     file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
