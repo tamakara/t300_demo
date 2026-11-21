@@ -1,6 +1,7 @@
 #include "t300/bmp280.h"
 
-uint8_t BMP280_ReadReg(uint8_t address, uint8_t *data, uint8_t size) {
+uint8_t BMP280_ReadReg(uint8_t address, uint8_t *data, uint8_t size)
+{
   return HAL_I2C_Mem_Read(
              &hi2c1,
              BMP280_ADDR,
@@ -11,7 +12,8 @@ uint8_t BMP280_ReadReg(uint8_t address, uint8_t *data, uint8_t size) {
              100) == HAL_OK;
 }
 
-uint8_t BMP280_WriteReg(uint8_t reg, uint8_t value) {
+uint8_t BMP280_WriteReg(uint8_t reg, uint8_t value)
+{
   return HAL_I2C_Mem_Write(
              &hi2c1,
              BMP280_ADDR,
@@ -22,7 +24,8 @@ uint8_t BMP280_WriteReg(uint8_t reg, uint8_t value) {
              100) == HAL_OK;
 }
 
-typedef struct {
+typedef struct
+{
   uint16_t T1;
   int16_t T2;
   int16_t T3;
@@ -40,7 +43,8 @@ typedef struct {
 
 static calib_t calib;
 
-static uint8_t BMP280_ReadCalibration() {
+static uint8_t BMP280_ReadCalibration(void)
+{
   uint8_t data[24];
 
   if (HAL_I2C_Mem_Read(
@@ -50,7 +54,8 @@ static uint8_t BMP280_ReadCalibration() {
           I2C_MEMADD_SIZE_8BIT,
           data,
           24,
-          100) != HAL_OK) {
+          100) != HAL_OK)
+  {
     return 0;
   }
   calib.T1 = (uint16_t)(data[1] << 8 | data[0]);
@@ -68,45 +73,53 @@ static uint8_t BMP280_ReadCalibration() {
   calib.P9 = (int16_t)(data[23] << 8 | data[22]);
 
   // P1 为 0 时，气压补偿公式无法正常计算
-  if (calib.P1 == 0) {
+  if (calib.P1 == 0)
+  {
     return 0;
   }
 
   return 1;
 }
-uint8_t BMP280_Init(void) {
+uint8_t BMP280_Init(void)
+{
   // 软复位
-  if (!BMP280_WriteReg(0xE0, 0xB6)) {
+  if (!BMP280_WriteReg(0xE0, 0xB6))
+  {
     return 0;
   }
 
   HAL_Delay(10);
 
   // 读取出厂校准参数
-  if (!BMP280_ReadCalibration()) {
+  if (!BMP280_ReadCalibration())
+  {
     return 0;
   }
 
   // 配置滤波器
-  if (!BMP280_WriteReg(0xF5, 0x08)) {
+  if (!BMP280_WriteReg(0xF5, 0x08))
+  {
     return 0;
   }
 
   // 温度 x2，气压 x16，Normal 模式
-  if (!BMP280_WriteReg(0xF4, 0x57)) {
+  if (!BMP280_WriteReg(0xF4, 0x57))
+  {
     return 0;
   }
 
   return 1;
 }
 
-uint8_t BMP280_ReadRaw(int32_t *raw_temp, int32_t *raw_press) {
+uint8_t BMP280_ReadRaw(int32_t *raw_temp, int32_t *raw_press)
+{
   if (raw_temp == NULL || raw_press == NULL)
     return 0;
 
   uint8_t data[6];
 
-  if (!BMP280_ReadReg(0xF7, data, 6)) {
+  if (!BMP280_ReadReg(0xF7, data, 6))
+  {
     return 0;
   }
 
@@ -119,7 +132,8 @@ uint8_t BMP280_ReadRaw(int32_t *raw_temp, int32_t *raw_press) {
   return 1;
 }
 
-uint8_t BMP280_Read(float *temperature, float *pressure) {
+uint8_t BMP280_Read(float *temperature, float *pressure)
+{
   int32_t adc_T;
   int32_t adc_P;
 
@@ -133,7 +147,8 @@ uint8_t BMP280_Read(float *temperature, float *pressure) {
   int64_t p;
 
   // 1. 一次性读取温度和气压原始数据
-  if (!BMP280_ReadRaw(&adc_T, &adc_P)) {
+  if (!BMP280_ReadRaw(&adc_T, &adc_P))
+  {
     return 0;
   }
 
@@ -149,7 +164,8 @@ uint8_t BMP280_Read(float *temperature, float *pressure) {
 
   t_fine = var1_T + var2_T;
 
-  if (temperature != NULL) {
+  if (temperature != NULL)
+  {
     t = (t_fine * 5 + 128) >> 8;
     *temperature = t / 100.0f;
   }
@@ -168,7 +184,8 @@ uint8_t BMP280_Read(float *temperature, float *pressure) {
 
   var1_P = (((((int64_t)1) << 47) + var1_P) * (int64_t)calib.P1) >> 33;
 
-  if (var1_P == 0) {
+  if (var1_P == 0)
+  {
     return 0;
   }
 

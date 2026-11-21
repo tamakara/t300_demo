@@ -1,43 +1,29 @@
 #include "t300/debug.h"
 
-extern UART_HandleTypeDef huart1;
-
-#define UART_TX_BUFFER_SIZE 256
-
-static uint8_t tx_buffer[UART_TX_BUFFER_SIZE];
-static volatile uint8_t tx_busy = 0;
-
-int _write(int file, char *ptr, int len)
+int __io_putchar(int ch)
 {
-  (void)file;
-
-  if (len <= 0 || len > UART_TX_BUFFER_SIZE)
-  {
-    return -1;
-  }
-
-  // 等待上一次 DMA 发送完成
-  while (tx_busy)
-  {
-  }
-
-  memcpy(tx_buffer, ptr, len);
-
-  tx_busy = 1;
-
-  if (HAL_UART_Transmit_DMA(&huart1, tx_buffer, len) != HAL_OK)
-  {
-    tx_busy = 0;
-    return -1;
-  }
-
-  return len;
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
 }
 
-void Debug_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+int uart_getline(char *buf, int max_len)
 {
-  if (huart->Instance == USART1)
+  int i = 0;
+  uint8_t ch;
+
+  while (i < max_len - 1)
   {
-    tx_busy = 0;
+    if (HAL_UART_Receive(&huart1, &ch, 1, HAL_MAX_DELAY) != HAL_OK)
+      return EOF; // 接收失败
+
+    if (ch == '\n') // 一行结束
+      break;
+    if (ch == '\r') // 忽略回车
+      continue;
+
+    buf[i++] = (char)ch;
   }
+
+  buf[i] = '\0';
+  return i;
 }

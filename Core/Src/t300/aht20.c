@@ -1,35 +1,42 @@
 #include "t300/aht20.h"
 
-uint8_t AHT20_Ready() {
+uint8_t AHT20_Ready(void)
+{
   HAL_StatusTypeDef state =
       HAL_I2C_IsDeviceReady(&hi2c1, AHT20_ADDR, 10, HAL_MAX_DELAY);
-  if (state != HAL_OK) {
+  if (state != HAL_OK)
+  {
     return 0; // Not ready
   }
   return 1; // Ready
 }
 
-uint8_t AHT20_Init() {
+uint8_t AHT20_Init(void)
+{
   uint8_t status;
 
   if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, &status, 1, HAL_MAX_DELAY) !=
-      HAL_OK) {
+      HAL_OK)
+  {
     return 0;
   }
 
   // 检查校准使能状态（bit 3）
-  if ((status & 0x08) == 0) {
+  if ((status & 0x08) == 0)
+  {
     uint8_t cmd[3] = {0xBE, 0x08, 0x00};
 
     if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_ADDR, cmd, 3, HAL_MAX_DELAY) !=
-        HAL_OK) {
+        HAL_OK)
+    {
       return 0;
     }
 
     HAL_Delay(10);
 
     if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, &status, 1, HAL_MAX_DELAY) !=
-        HAL_OK) {
+        HAL_OK)
+    {
       return 0;
     }
   }
@@ -37,27 +44,32 @@ uint8_t AHT20_Init() {
   return (status & 0x08) ? 1 : 0;
 }
 
-uint8_t AHT20_ReadRaw(uint8_t *data) {
+uint8_t AHT20_ReadRaw(uint8_t *data)
+{
   uint8_t cmd[3] = {0xAC, 0x33, 0x00};
 
   if (data == NULL)
     return 0;
 
   // 触发测量
-  if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_ADDR, cmd, 3, 100) != HAL_OK) {
+  if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_ADDR, cmd, 3, 100) != HAL_OK)
+  {
     return 0;
   }
 
   // 等待测量完成
   uint32_t start = HAL_GetTick();
 
-  while (HAL_GetTick() - start < HAL_MAX_DELAY) {
-    if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, data, 7, 100) != HAL_OK) {
+  while (HAL_GetTick() - start < HAL_MAX_DELAY)
+  {
+    if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, data, 7, 100) != HAL_OK)
+    {
       return 0;
     }
 
     // bit7 = 0，表示测量完成
-    if ((data[0] & 0x80) == 0) {
+    if ((data[0] & 0x80) == 0)
+    {
       return 1;
     }
 
@@ -67,7 +79,8 @@ uint8_t AHT20_ReadRaw(uint8_t *data) {
   return 0;
 }
 
-uint8_t AHT20_Read(float *temperature, float *humidity) {
+uint8_t AHT20_Read(float *temperature, float *humidity)
+{
   uint8_t data[7];
 
   if (temperature == NULL || humidity == NULL)

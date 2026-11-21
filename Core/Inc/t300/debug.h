@@ -5,9 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define UART_TX_BUFFER_SIZE 256
-
-int _write(int file, char *ptr, int len);
-void Debug_UART_TxCpltCallback(UART_HandleTypeDef *huart);
+int uart_getline(char *buf, int max_len);
 
 #endif

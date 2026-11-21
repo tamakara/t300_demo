@@ -1,7 +1,8 @@
 
 #include "t300/flash.h"
 
-uint8_t SPI1_ReadWriteByte(uint8_t data) {
+uint8_t SPI1_ReadWriteByte(uint8_t data)
+{
   uint8_t receive_data = 0;
 
   HAL_SPI_TransmitReceive(&hspi1, &data, &receive_data, 1, HAL_MAX_DELAY);
@@ -9,7 +10,8 @@ uint8_t SPI1_ReadWriteByte(uint8_t data) {
   return receive_data;
 }
 
-void FLASH_ReadJEDECID(uint8_t *id) {
+void FLASH_ReadJEDECID(uint8_t *id)
+{
   FLASH_CS_LOW();
 
   SPI1_ReadWriteByte(0x9F);
@@ -21,7 +23,8 @@ void FLASH_ReadJEDECID(uint8_t *id) {
   FLASH_CS_HIGH();
 }
 
-uint8_t FLASH_ReadStatus(void) {
+uint8_t FLASH_ReadStatus(void)
+{
   uint8_t status;
 
   FLASH_CS_LOW();
@@ -33,13 +36,16 @@ uint8_t FLASH_ReadStatus(void) {
 
   return status;
 }
-void FLASH_Read(uint32_t address, uint8_t *buffer, uint32_t length) {
-  if (buffer == NULL || length == 0) {
+void FLASH_Read(uint32_t address, uint8_t *buffer, uint32_t length)
+{
+  if (buffer == NULL || length == 0)
+  {
     return;
   }
 
   // 检查 24 位地址范围
-  if (address >= 0x1000000 || length > 0x1000000 - address) {
+  if (address >= 0x1000000 || length > 0x1000000 - address)
+  {
     return;
   }
 
@@ -51,14 +57,16 @@ void FLASH_Read(uint32_t address, uint8_t *buffer, uint32_t length) {
   SPI1_ReadWriteByte((address >> 8) & 0xFF);
   SPI1_ReadWriteByte(address & 0xFF);
 
-  for (uint32_t i = 0; i < length; i++) {
+  for (uint32_t i = 0; i < length; i++)
+  {
     buffer[i] = SPI1_ReadWriteByte(0xFF);
   }
 
   FLASH_CS_HIGH();
 }
 
-void FLASH_WriteEnable(void) {
+void FLASH_WriteEnable(void)
+{
   FLASH_CS_LOW();
 
   SPI1_ReadWriteByte(0x06);
@@ -66,11 +74,14 @@ void FLASH_WriteEnable(void) {
   FLASH_CS_HIGH();
 }
 
-uint8_t FLASH_WaitBusy(uint32_t timeout) {
+uint8_t FLASH_WaitBusy(uint32_t timeout)
+{
   uint32_t start_tick = HAL_GetTick();
 
-  while (FLASH_ReadStatus() & 0x01) {
-    if (HAL_GetTick() - start_tick >= timeout) {
+  while (FLASH_ReadStatus() & 0x01)
+  {
+    if (HAL_GetTick() - start_tick >= timeout)
+    {
       return 0; // 超时
     }
   }
@@ -78,9 +89,11 @@ uint8_t FLASH_WaitBusy(uint32_t timeout) {
   return 1; // 操作完成
 }
 
-uint8_t FLASH_EraseSector(uint32_t address) {
+uint8_t FLASH_EraseSector(uint32_t address)
+{
   // 1. 检查地址范围
-  if (address >= FLASH_CAPACITY) {
+  if (address >= FLASH_CAPACITY)
+  {
     return 0;
   }
 
@@ -88,7 +101,8 @@ uint8_t FLASH_EraseSector(uint32_t address) {
   address &= ~(FLASH_SECTOR_SIZE - 1);
 
   // 3. 等待 Flash 空闲
-  if (!FLASH_WaitBusy(HAL_MAX_DELAY)) {
+  if (!FLASH_WaitBusy(HAL_MAX_DELAY))
+  {
     return 0;
   }
 
@@ -96,7 +110,8 @@ uint8_t FLASH_EraseSector(uint32_t address) {
   FLASH_WriteEnable();
 
   // 5. 检查 WEL
-  if ((FLASH_ReadStatus() & 0x02) == 0) {
+  if ((FLASH_ReadStatus() & 0x02) == 0)
+  {
     return 0;
   }
 
@@ -118,26 +133,31 @@ uint8_t FLASH_EraseSector(uint32_t address) {
 uint8_t FLASH_PageProgram(
     uint32_t address,
     const uint8_t *buffer,
-    uint32_t length) {
+    uint32_t length)
+{
   // 1. 参数检查
-  if (buffer == NULL || length == 0) {
+  if (buffer == NULL || length == 0)
+  {
     return 0;
   }
 
   // 2. 地址范围检查
-  if (address >= FLASH_CAPACITY || length > FLASH_CAPACITY - address) {
+  if (address >= FLASH_CAPACITY || length > FLASH_CAPACITY - address)
+  {
     return 0;
   }
 
   // 3. 检查是否跨越 Page
   uint32_t page_remain = FLASH_PAGE_SIZE - (address % FLASH_PAGE_SIZE);
 
-  if (length > page_remain) {
+  if (length > page_remain)
+  {
     return 0;
   }
 
   // 4. 等待 Flash 空闲
-  if (!FLASH_WaitBusy(HAL_MAX_DELAY)) {
+  if (!FLASH_WaitBusy(HAL_MAX_DELAY))
+  {
     return 0;
   }
 
@@ -145,7 +165,8 @@ uint8_t FLASH_PageProgram(
   FLASH_WriteEnable();
 
   // 6. 检查 WEL
-  if ((FLASH_ReadStatus() & 0x02) == 0) {
+  if ((FLASH_ReadStatus() & 0x02) == 0)
+  {
     return 0;
   }
 
@@ -159,7 +180,8 @@ uint8_t FLASH_PageProgram(
   SPI1_ReadWriteByte(address & 0xFF);
 
   // 8. 发送数据
-  for (uint32_t i = 0; i < length; i++) {
+  for (uint32_t i = 0; i < length; i++)
+  {
     SPI1_ReadWriteByte(buffer[i]);
   }
 
@@ -169,16 +191,20 @@ uint8_t FLASH_PageProgram(
   return FLASH_WaitBusy(HAL_MAX_DELAY);
 }
 
-uint8_t FLASH_Write(uint32_t address, const uint8_t *buffer, uint32_t length) {
-  if (buffer == NULL || length == 0) {
+uint8_t FLASH_Write(uint32_t address, const uint8_t *buffer, uint32_t length)
+{
+  if (buffer == NULL || length == 0)
+  {
     return 0;
   }
 
-  if (address >= FLASH_CAPACITY || length > FLASH_CAPACITY - address) {
+  if (address >= FLASH_CAPACITY || length > FLASH_CAPACITY - address)
+  {
     return 0;
   }
 
-  while (length > 0) {
+  while (length > 0)
+  {
     // 当前 Page 剩余空间
     uint32_t page_remain = FLASH_PAGE_SIZE - (address % FLASH_PAGE_SIZE);
 
@@ -186,7 +212,8 @@ uint8_t FLASH_Write(uint32_t address, const uint8_t *buffer, uint32_t length) {
     uint32_t write_length = (length < page_remain) ? length : page_remain;
 
     // 写入当前 Page
-    if (!FLASH_PageProgram(address, buffer, write_length)) {
+    if (!FLASH_PageProgram(address, buffer, write_length))
+    {
       return 0;
     }
 

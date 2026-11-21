@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "dma.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -31,6 +32,7 @@
 #include "t300/debug.h"
 #include "t300/eeprom.h"
 #include "t300/flash.h"
+#include "t300/rm063.h"
 
 /* USER CODE END Includes */
 
@@ -86,8 +88,8 @@ void eeprom_main(void)
 
   while (1)
   {
-    // if (getline(line, sizeof(line)) == EOF)
-    //   continue;
+    if (uart_getline(line, sizeof(line)) == EOF)
+      continue;
 
     sscanf(line, "%s", operation);
     if (strcmp(operation, "read") == 0)
@@ -129,8 +131,8 @@ void flash_main()
 
   while (1)
   {
-    // if (getline(line, sizeof(line)) == EOF)
-    //   continue;
+    if (uart_getline(line, sizeof(line)) == EOF)
+      continue;
 
     sscanf(line, "%s", operation);
     if (strcmp(operation, "read") == 0)
@@ -221,7 +223,6 @@ void bmp280_main()
     HAL_Delay(1000);
   }
 }
-
 /* USER CODE END 0 */
 
 /**
@@ -258,6 +259,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -269,13 +271,22 @@ int main(void)
   // flash_main();
   // aht20_main();
   // bmp280_main();
-
-  printf("Please input a number: \r\n");
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    while (1)
+    {
+      float raw_voltage = RM063_ReadVoltage();
+      float avg_voltage = RM063_ReadVoltage_Average(100);
+
+      printf("Voltage: %.3f V\r\n", raw_voltage);
+      printf("Average Voltage: %.3f V\r\n", avg_voltage);
+      printf("\r\n");
+
+      HAL_Delay(500);
+    }
   }
   /* USER CODE END 3 */
 }
@@ -330,10 +341,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-  Debug_UART_TxCpltCallback(huart);
-}
+
 /* USER CODE END 4 */
 
 /**

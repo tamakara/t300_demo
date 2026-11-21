@@ -50,6 +50,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/t300/flash.c
     Core/Src/t300/aht20.c
     Core/Src/t300/bmp280.c
+    Core/Src/t300/rm063.c
 )
 
 # Add include paths
