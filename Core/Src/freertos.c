@@ -19,10 +19,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os.h"
-#include "cmsis_os2.h"
-#include "main.h"
 #include "task.h"
+#include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -53,9 +52,9 @@
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-    .name = "defaultTask",
-    .stack_size = 128 * 4,
-    .priority = (osPriority_t)osPriorityNormal,
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,15 +64,15 @@ const osThreadAttr_t defaultTask_attributes = {
 
 void StartDefaultTask(void *argument);
 
+extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
-void MX_FREERTOS_Init(void)
-{
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
+void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -100,8 +99,7 @@ void MX_FREERTOS_Init(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle =
-      osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 
@@ -112,6 +110,7 @@ void MX_FREERTOS_Init(void)
 
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -123,6 +122,8 @@ void MX_FREERTOS_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
+  /* init code for LWIP */
+  MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
   osDelay(5000);
 
@@ -165,3 +166,4 @@ void StartDefaultTask(void *argument)
 /* USER CODE BEGIN Application */
 
 /* USER CODE END Application */
+
