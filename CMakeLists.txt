@@ -45,12 +45,13 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    Core/Src/t300/debug.c
+    Core/Src/t300/log.c
     Core/Src/t300/eeprom.c
     Core/Src/t300/flash.c
     Core/Src/t300/aht20.c
     Core/Src/t300/bmp280.c
     Core/Src/t300/rm063.c
+    Core/Src/t300/led.c
 )
 
 # Add include paths

@@ -1,4 +1,4 @@
-#include "t300/debug.h"
+#include "t300/log.h"
 
 int __io_putchar(int ch)
 {
