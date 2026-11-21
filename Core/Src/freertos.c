@@ -20,14 +20,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "main.h"
 #include "task.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "event_groups.h"
 #include "t300/led.h"
 #include "t300/log.h"
-#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -38,6 +39,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define EVENT_SENSOR_READY (1U << 0)
+#define EVENT_NETWORK_READY (1U << 1)
+#define EVENT_STORAGE_READY (1U << 2)
+
+#define EVENT_ALL_READY                                                        \
+  (EVENT_SENSOR_READY | EVENT_NETWORK_READY | EVENT_STORAGE_READY)
 
 /* USER CODE END PD */
 
@@ -48,19 +55,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-const osThreadAttr_t logTask_attributes = {
-    .name = "logTask",
-    .stack_size = 1024,
-    .priority = (osPriority_t)osPriorityNormal,
-};
-const osThreadAttr_t ledTask_attributes = {
-    .name = "LEDTask",
-    .stack_size = 512,
-    .priority = (osPriority_t)osPriorityNormal,
-};
-
-osMessageQueueId_t logQueueHandle;
-osMutexId_t uartMutexHandle;
+EventGroupHandle_t systemEventGroupHandle;
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -73,8 +68,10 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void LogTask(void *argument);
-void LEDTask(void *argument);
+void SensorInitTask(void *argument);
+void NetworkInitTask(void *argument);
+void StorageInitTask(void *argument);
+void SystemTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -94,19 +91,22 @@ void MX_FREERTOS_Init(void)
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
+
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
+
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
+
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  logQueueHandle = osMessageQueueNew(32, sizeof(uint8_t), NULL);
+
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
@@ -116,13 +116,40 @@ void MX_FREERTOS_Init(void)
       osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  osThreadNew(LogTask, NULL, &logTask_attributes);
-  osThreadNew(LEDTask, NULL, &ledTask_attributes);
+  const osThreadAttr_t sensorInitTask_attributes = {
+      .name = "SensorInit",
+      .stack_size = 1024,
+      .priority = osPriorityNormal,
+  };
+  osThreadNew(SensorInitTask, NULL, &sensorInitTask_attributes);
+
+  const osThreadAttr_t networkInitTask_attributes = {
+      .name = "NetworkInit",
+      .stack_size = 1024,
+      .priority = osPriorityNormal,
+  };
+  osThreadNew(NetworkInitTask, NULL, &networkInitTask_attributes);
+
+  const osThreadAttr_t storageInitTask_attributes = {
+      .name = "StorageInit",
+      .stack_size = 1024,
+      .priority = osPriorityNormal,
+  };
+  osThreadNew(StorageInitTask, NULL, &storageInitTask_attributes);
+
+  const osThreadAttr_t systemTask_attributes = {
+      .name = "SystemTask",
+      .stack_size = 1024,
+      .priority = osPriorityNormal,
+  };
+  osThreadNew(SystemTask, NULL, &systemTask_attributes);
 
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
+  systemEventGroupHandle = xEventGroupCreate();
+
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 }
@@ -147,36 +174,64 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void LogTask(void *argument)
+void SensorInitTask(void *argument)
 {
   (void)argument;
 
-  uint8_t state;
+  osDelay(1000);
 
-  for (;;)
-  {
-    osStatus_t status =
-        osMessageQueueGet(logQueueHandle, &state, NULL, osWaitForever);
+  printf("Sensor: Initialization Complete!\r\n");
 
-    if (status == osOK)
-    {
-      printf("Consumer: Receive %hhu\r\n", state);
-    }
-  }
+  xEventGroupSetBits(systemEventGroupHandle, EVENT_SENSOR_READY);
+
+  vTaskDelete(NULL);
 }
 
-void LEDTask(void *argument)
+void NetworkInitTask(void *argument)
 {
   (void)argument;
 
-  uint8_t state;
+  osDelay(2000);
 
-  for (;;)
+  printf("Network: Initialization Complete!\r\n");
+
+  xEventGroupSetBits(systemEventGroupHandle, EVENT_NETWORK_READY);
+
+  vTaskDelete(NULL);
+}
+
+void StorageInitTask(void *argument)
+{
+  (void)argument;
+
+  osDelay(3000);
+
+  printf("Storage: Initialization Complete!\r\n");
+
+  xEventGroupSetBits(systemEventGroupHandle, EVENT_STORAGE_READY);
+
+  vTaskDelete(NULL);
+}
+
+void SystemTask(void *argument)
+{
+  (void)argument;
+
+  printf("System: Waiting for initialization...\r\n");
+
+  EventBits_t bits = xEventGroupWaitBits(
+      systemEventGroupHandle,
+      EVENT_ALL_READY,
+      pdFALSE,
+      pdTRUE,
+      portMAX_DELAY);
+
+  if ((bits & EVENT_ALL_READY) == EVENT_ALL_READY)
   {
-    LED0_Toggle();
-    state = LED0_State();
-    osMessageQueuePut(logQueueHandle, &state, 0, 0);
-    osDelay(2000);
+    printf("System: All Modules Ready!\r\n");
+    printf("System: Data Upload Started!\r\n");
   }
+
+  vTaskDelete(NULL);
 }
 /* USER CODE END Application */
