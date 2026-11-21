@@ -3,7 +3,7 @@
 
 #include "i2c.h"
 
-#define EEPROM_ADDR (0x50 << 1)
+#define EEPROM_DEV_ADDR (0x50 << 1)
 
 uint8_t EEPROM_Ready(void);
 uint8_t EEPROM_ReadByte(uint8_t address, uint8_t *data);

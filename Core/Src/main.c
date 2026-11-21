@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "cmsis_os.h"
 #include "dma.h"
+#include "eth.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "spi.h"
@@ -32,6 +33,7 @@
 #include "t300/bmp280.h"
 #include "t300/eeprom.h"
 #include "t300/flash.h"
+#include "t300/lan8720.h"
 #include "t300/log.h"
 #include "t300/rm063.h"
 
@@ -262,6 +264,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_ADC1_Init();
+  MX_ETH_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -283,20 +286,12 @@ int main(void)
   // flash_main();
   // aht20_main();
   // bmp280_main();
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-    float raw_voltage = RM063_ReadVoltage();
-    float avg_voltage = RM063_ReadVoltage_Average(100);
-
-    printf("Voltage: %.3f V\r\n", raw_voltage);
-    printf("Average Voltage: %.3f V\r\n", avg_voltage);
-    printf("\r\n");
-
-    HAL_Delay(500);
   }
   /* USER CODE END 3 */
 }

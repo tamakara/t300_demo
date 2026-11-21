@@ -71,6 +71,8 @@ void Error_Handler(void);
 #define KEY_UP_GPIO_Port GPIOA
 #define FLASH_CS_Pin GPIO_PIN_14
 #define FLASH_CS_GPIO_Port GPIOB
+#define ETH_RESET_Pin GPIO_PIN_3
+#define ETH_RESET_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

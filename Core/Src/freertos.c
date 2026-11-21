@@ -26,8 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "event_groups.h"
-#include "t300/led.h"
+#include "t300/lan8720.h"
 #include "t300/log.h"
 
 /* USER CODE END Includes */
@@ -39,12 +38,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define EVENT_SENSOR_READY (1U << 0)
-#define EVENT_NETWORK_READY (1U << 1)
-#define EVENT_STORAGE_READY (1U << 2)
-
-#define EVENT_ALL_READY                                                        \
-  (EVENT_SENSOR_READY | EVENT_NETWORK_READY | EVENT_STORAGE_READY)
 
 /* USER CODE END PD */
 
@@ -55,7 +48,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-EventGroupHandle_t systemEventGroupHandle;
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -68,10 +60,6 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void SensorInitTask(void *argument);
-void NetworkInitTask(void *argument);
-void StorageInitTask(void *argument);
-void SystemTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -116,39 +104,11 @@ void MX_FREERTOS_Init(void)
       osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  const osThreadAttr_t sensorInitTask_attributes = {
-      .name = "SensorInit",
-      .stack_size = 1024,
-      .priority = osPriorityNormal,
-  };
-  osThreadNew(SensorInitTask, NULL, &sensorInitTask_attributes);
-
-  const osThreadAttr_t networkInitTask_attributes = {
-      .name = "NetworkInit",
-      .stack_size = 1024,
-      .priority = osPriorityNormal,
-  };
-  osThreadNew(NetworkInitTask, NULL, &networkInitTask_attributes);
-
-  const osThreadAttr_t storageInitTask_attributes = {
-      .name = "StorageInit",
-      .stack_size = 1024,
-      .priority = osPriorityNormal,
-  };
-  osThreadNew(StorageInitTask, NULL, &storageInitTask_attributes);
-
-  const osThreadAttr_t systemTask_attributes = {
-      .name = "SystemTask",
-      .stack_size = 1024,
-      .priority = osPriorityNormal,
-  };
-  osThreadNew(SystemTask, NULL, &systemTask_attributes);
 
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  systemEventGroupHandle = xEventGroupCreate();
 
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
@@ -164,6 +124,35 @@ void MX_FREERTOS_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  osDelay(5000);
+
+  LAN8720_BasicStatus_t basicStatus;
+  LAN8720_SpecialStatus_t specialStatus;
+
+  basicStatus = LAN8720_GetBasicStatus();
+  specialStatus = LAN8720_GetSpecialStatus();
+
+  printf("PHY BSR: 0x%04X\r\n", basicStatus.raw);
+
+  printf("Link: %s\r\n", basicStatus.link_status ? "UP" : "DOWN");
+
+  printf(
+      "Auto Negotiation: %s\r\n",
+      basicStatus.autoneg_complete ? "Complete" : "Incomplete");
+
+  printf("PHY SCSR: 0x%04X\r\n", specialStatus.raw);
+
+  printf(
+      "Speed: %s\r\n",
+      specialStatus.speed == LAN8720_SPEED_100M  ? "100Mbps"
+      : specialStatus.speed == LAN8720_SPEED_10M ? "10Mbps"
+                                                 : "Unknown");
+
+  printf(
+      "Duplex: %s\r\n",
+      specialStatus.duplex == LAN8720_DUPLEX_FULL   ? "Full"
+      : specialStatus.duplex == LAN8720_DUPLEX_HALF ? "Half"
+                                                    : "Unknown");
   /* Infinite loop */
   for (;;)
   {
@@ -174,64 +163,5 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void SensorInitTask(void *argument)
-{
-  (void)argument;
 
-  osDelay(1000);
-
-  printf("Sensor: Initialization Complete!\r\n");
-
-  xEventGroupSetBits(systemEventGroupHandle, EVENT_SENSOR_READY);
-
-  vTaskDelete(NULL);
-}
-
-void NetworkInitTask(void *argument)
-{
-  (void)argument;
-
-  osDelay(2000);
-
-  printf("Network: Initialization Complete!\r\n");
-
-  xEventGroupSetBits(systemEventGroupHandle, EVENT_NETWORK_READY);
-
-  vTaskDelete(NULL);
-}
-
-void StorageInitTask(void *argument)
-{
-  (void)argument;
-
-  osDelay(3000);
-
-  printf("Storage: Initialization Complete!\r\n");
-
-  xEventGroupSetBits(systemEventGroupHandle, EVENT_STORAGE_READY);
-
-  vTaskDelete(NULL);
-}
-
-void SystemTask(void *argument)
-{
-  (void)argument;
-
-  printf("System: Waiting for initialization...\r\n");
-
-  EventBits_t bits = xEventGroupWaitBits(
-      systemEventGroupHandle,
-      EVENT_ALL_READY,
-      pdFALSE,
-      pdTRUE,
-      portMAX_DELAY);
-
-  if ((bits & EVENT_ALL_READY) == EVENT_ALL_READY)
-  {
-    printf("System: All Modules Ready!\r\n");
-    printf("System: Data Upload Started!\r\n");
-  }
-
-  vTaskDelete(NULL);
-}
 /* USER CODE END Application */

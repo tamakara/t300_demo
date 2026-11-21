@@ -52,6 +52,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/t300/bmp280.c
     Core/Src/t300/rm063.c
     Core/Src/t300/led.c
+    Core/Src/t300/lan8720.c
 )
 
 # Add include paths

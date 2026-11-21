@@ -3,7 +3,7 @@
 uint8_t AHT20_Ready(void)
 {
   HAL_StatusTypeDef state =
-      HAL_I2C_IsDeviceReady(&hi2c1, AHT20_ADDR, 10, HAL_MAX_DELAY);
+      HAL_I2C_IsDeviceReady(&hi2c1, AHT20_DEV_ADDR, 10, HAL_MAX_DELAY);
   if (state != HAL_OK)
   {
     return 0; // Not ready
@@ -15,8 +15,12 @@ uint8_t AHT20_Init(void)
 {
   uint8_t status;
 
-  if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, &status, 1, HAL_MAX_DELAY) !=
-      HAL_OK)
+  if (HAL_I2C_Master_Receive(
+          &hi2c1,
+          AHT20_DEV_ADDR,
+          &status,
+          1,
+          HAL_MAX_DELAY) != HAL_OK)
   {
     return 0;
   }
@@ -26,16 +30,22 @@ uint8_t AHT20_Init(void)
   {
     uint8_t cmd[3] = {0xBE, 0x08, 0x00};
 
-    if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_ADDR, cmd, 3, HAL_MAX_DELAY) !=
-        HAL_OK)
+    if (HAL_I2C_Master_Transmit(
+            &hi2c1,
+            AHT20_DEV_ADDR,
+            cmd,
+            3,
+            HAL_MAX_DELAY) != HAL_OK)
     {
       return 0;
     }
 
-    HAL_Delay(10);
-
-    if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, &status, 1, HAL_MAX_DELAY) !=
-        HAL_OK)
+    if (HAL_I2C_Master_Receive(
+            &hi2c1,
+            AHT20_DEV_ADDR,
+            &status,
+            1,
+            HAL_MAX_DELAY) != HAL_OK)
     {
       return 0;
     }
@@ -52,7 +62,7 @@ uint8_t AHT20_ReadRaw(uint8_t *data)
     return 0;
 
   // 触发测量
-  if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_ADDR, cmd, 3, 100) != HAL_OK)
+  if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_DEV_ADDR, cmd, 3, 100) != HAL_OK)
   {
     return 0;
   }
@@ -62,7 +72,7 @@ uint8_t AHT20_ReadRaw(uint8_t *data)
 
   while (HAL_GetTick() - start < HAL_MAX_DELAY)
   {
-    if (HAL_I2C_Master_Receive(&hi2c1, AHT20_ADDR, data, 7, 100) != HAL_OK)
+    if (HAL_I2C_Master_Receive(&hi2c1, AHT20_DEV_ADDR, data, 7, 100) != HAL_OK)
     {
       return 0;
     }
@@ -72,8 +82,6 @@ uint8_t AHT20_ReadRaw(uint8_t *data)
     {
       return 1;
     }
-
-    HAL_Delay(10);
   }
 
   return 0;

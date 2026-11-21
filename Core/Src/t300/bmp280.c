@@ -88,8 +88,6 @@ uint8_t BMP280_Init(void)
     return 0;
   }
 
-  HAL_Delay(10);
-
   // 读取出厂校准参数
   if (!BMP280_ReadCalibration())
   {
