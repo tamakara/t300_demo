@@ -1,6 +1,42 @@
-#include "t300/aht20.h"
+#include "sensor_aht20.h"
+#include "i2c.h"
 
-uint8_t AHT20_Ready(void)
+#define AHT20_DEV_ADDR (0x38 << 1)
+
+static uint8_t AHT20_ReadRaw(uint8_t *data)
+{
+  uint8_t cmd[3] = {0xAC, 0x33, 0x00};
+
+  if (data == NULL)
+    return 0;
+
+  // 触发测量
+  if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_DEV_ADDR, cmd, 3, 100) != HAL_OK)
+  {
+    return 0;
+  }
+
+  // 等待测量完成
+  uint32_t start = HAL_GetTick();
+
+  while (HAL_GetTick() - start < HAL_MAX_DELAY)
+  {
+    if (HAL_I2C_Master_Receive(&hi2c1, AHT20_DEV_ADDR, data, 7, 100) != HAL_OK)
+    {
+      return 0;
+    }
+
+    // bit7 = 0，表示测量完成
+    if ((data[0] & 0x80) == 0)
+    {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+uint8_t Sensor_AHT20_Ready(void)
 {
   HAL_StatusTypeDef state =
       HAL_I2C_IsDeviceReady(&hi2c1, AHT20_DEV_ADDR, 10, HAL_MAX_DELAY);
@@ -11,7 +47,7 @@ uint8_t AHT20_Ready(void)
   return 1; // Ready
 }
 
-uint8_t AHT20_Init(void)
+uint8_t Sensor_AHT20_Init(void)
 {
   uint8_t status;
 
@@ -54,40 +90,7 @@ uint8_t AHT20_Init(void)
   return (status & 0x08) ? 1 : 0;
 }
 
-uint8_t AHT20_ReadRaw(uint8_t *data)
-{
-  uint8_t cmd[3] = {0xAC, 0x33, 0x00};
-
-  if (data == NULL)
-    return 0;
-
-  // 触发测量
-  if (HAL_I2C_Master_Transmit(&hi2c1, AHT20_DEV_ADDR, cmd, 3, 100) != HAL_OK)
-  {
-    return 0;
-  }
-
-  // 等待测量完成
-  uint32_t start = HAL_GetTick();
-
-  while (HAL_GetTick() - start < HAL_MAX_DELAY)
-  {
-    if (HAL_I2C_Master_Receive(&hi2c1, AHT20_DEV_ADDR, data, 7, 100) != HAL_OK)
-    {
-      return 0;
-    }
-
-    // bit7 = 0，表示测量完成
-    if ((data[0] & 0x80) == 0)
-    {
-      return 1;
-    }
-  }
-
-  return 0;
-}
-
-uint8_t AHT20_Read(float *temperature, float *humidity)
+uint8_t Sensor_AHT20_Read(float *temperature, float *humidity)
 {
   uint8_t data[7];
 

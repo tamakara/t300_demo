@@ -19,15 +19,15 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "task.h"
-#include "main.h"
 #include "cmsis_os.h"
+#include "main.h"
+#include "task.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "t300/lan8720.h"
-#include "t300/log.h"
+#include "lwip.h"
 
+extern struct netif gnetif;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,18 +47,25 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+osThreadId_t networkStatusTaskHandle;
+const osThreadAttr_t networkStatusTask_attributes = {
+    .name = "NetworkStatus",
+    .stack_size = 1024,
+    .priority = osPriorityNormal,
+};
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+    .name = "defaultTask",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+void NetworkStatusTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -68,11 +75,12 @@ extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
-void MX_FREERTOS_Init(void) {
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
+void MX_FREERTOS_Init(void)
+{
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -99,10 +107,13 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle =
+      osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 
+  networkStatusTaskHandle =
+      osThreadNew(NetworkStatusTask, NULL, &networkStatusTask_attributes);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -110,7 +121,6 @@ void MX_FREERTOS_Init(void) {
 
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
-
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -125,35 +135,6 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
-  osDelay(5000);
-
-  LAN8720_BasicStatus_t basicStatus;
-  LAN8720_SpecialStatus_t specialStatus;
-
-  basicStatus = LAN8720_GetBasicStatus();
-  specialStatus = LAN8720_GetSpecialStatus();
-
-  printf("PHY BSR: 0x%04X\r\n", basicStatus.raw);
-
-  printf("Link: %s\r\n", basicStatus.link_status ? "UP" : "DOWN");
-
-  printf(
-      "Auto Negotiation: %s\r\n",
-      basicStatus.autoneg_complete ? "Complete" : "Incomplete");
-
-  printf("PHY SCSR: 0x%04X\r\n", specialStatus.raw);
-
-  printf(
-      "Speed: %s\r\n",
-      specialStatus.speed == LAN8720_SPEED_100M  ? "100Mbps"
-      : specialStatus.speed == LAN8720_SPEED_10M ? "10Mbps"
-                                                 : "Unknown");
-
-  printf(
-      "Duplex: %s\r\n",
-      specialStatus.duplex == LAN8720_DUPLEX_FULL   ? "Full"
-      : specialStatus.duplex == LAN8720_DUPLEX_HALF ? "Half"
-                                                    : "Unknown");
   /* Infinite loop */
   for (;;)
   {
@@ -164,6 +145,8 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
+void NetworkStatusTask(void *argument)
+{
+  (void)argument;
+}
 /* USER CODE END Application */
-

@@ -1,7 +1,7 @@
-#ifndef __LED_H
-#define __LED_H
+#ifndef __USER_BSP_LED_H
+#define __USER_BSP_LED_H
 
-#include "gpio.h"
+#include <stdint.h>
 
 void LED0_On(void);
 void LED0_Off(void);

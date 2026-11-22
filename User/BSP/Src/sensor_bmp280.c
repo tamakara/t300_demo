@@ -1,30 +1,9 @@
-#include "t300/bmp280.h"
+#include "sensor_bmp280.h"
+#include "i2c.h"
 
-uint8_t BMP280_ReadReg(uint8_t address, uint8_t *data, uint8_t size)
-{
-  return HAL_I2C_Mem_Read(
-             &hi2c1,
-             BMP280_ADDR,
-             address,
-             I2C_MEMADD_SIZE_8BIT,
-             data,
-             size,
-             100) == HAL_OK;
-}
+#define BMP280_DEV_ADDR (0x77 << 1)
 
-uint8_t BMP280_WriteReg(uint8_t reg, uint8_t value)
-{
-  return HAL_I2C_Mem_Write(
-             &hi2c1,
-             BMP280_ADDR,
-             reg,
-             I2C_MEMADD_SIZE_8BIT,
-             &value,
-             1,
-             100) == HAL_OK;
-}
-
-typedef struct
+static struct
 {
   uint16_t T1;
   int16_t T2;
@@ -39,9 +18,31 @@ typedef struct
   int16_t P7;
   int16_t P8;
   int16_t P9;
-} calib_t;
+} calib;
 
-static calib_t calib;
+static uint8_t BMP280_ReadReg(uint8_t address, uint8_t *data, uint8_t size)
+{
+  return HAL_I2C_Mem_Read(
+             &hi2c1,
+             BMP280_DEV_ADDR,
+             address,
+             I2C_MEMADD_SIZE_8BIT,
+             data,
+             size,
+             100) == HAL_OK;
+}
+
+static uint8_t WriteReg(uint8_t reg, uint8_t value)
+{
+  return HAL_I2C_Mem_Write(
+             &hi2c1,
+             BMP280_DEV_ADDR,
+             reg,
+             I2C_MEMADD_SIZE_8BIT,
+             &value,
+             1,
+             100) == HAL_OK;
+}
 
 static uint8_t BMP280_ReadCalibration(void)
 {
@@ -49,7 +50,7 @@ static uint8_t BMP280_ReadCalibration(void)
 
   if (HAL_I2C_Mem_Read(
           &hi2c1,
-          BMP280_ADDR,
+          BMP280_DEV_ADDR,
           0x88,
           I2C_MEMADD_SIZE_8BIT,
           data,
@@ -80,36 +81,8 @@ static uint8_t BMP280_ReadCalibration(void)
 
   return 1;
 }
-uint8_t BMP280_Init(void)
-{
-  // 软复位
-  if (!BMP280_WriteReg(0xE0, 0xB6))
-  {
-    return 0;
-  }
 
-  // 读取出厂校准参数
-  if (!BMP280_ReadCalibration())
-  {
-    return 0;
-  }
-
-  // 配置滤波器
-  if (!BMP280_WriteReg(0xF5, 0x08))
-  {
-    return 0;
-  }
-
-  // 温度 x2，气压 x16，Normal 模式
-  if (!BMP280_WriteReg(0xF4, 0x57))
-  {
-    return 0;
-  }
-
-  return 1;
-}
-
-uint8_t BMP280_ReadRaw(int32_t *raw_temp, int32_t *raw_press)
+static uint8_t BMP280_ReadRaw(int32_t *raw_temp, int32_t *raw_press)
 {
   if (raw_temp == NULL || raw_press == NULL)
     return 0;
@@ -130,7 +103,47 @@ uint8_t BMP280_ReadRaw(int32_t *raw_temp, int32_t *raw_press)
   return 1;
 }
 
-uint8_t BMP280_Read(float *temperature, float *pressure)
+uint8_t Sensor_BMP280_Ready(void)
+{
+  HAL_StatusTypeDef state =
+      HAL_I2C_IsDeviceReady(&hi2c1, BMP280_DEV_ADDR, 10, HAL_MAX_DELAY);
+  if (state != HAL_OK)
+  {
+    return 0; // Not ready
+  }
+  return 1; // Ready
+}
+
+uint8_t Sensor_BMP280_Init(void)
+{
+  // 软复位
+  if (!WriteReg(0xE0, 0xB6))
+  {
+    return 0;
+  }
+
+  // 读取出厂校准参数
+  if (!BMP280_ReadCalibration())
+  {
+    return 0;
+  }
+
+  // 配置滤波器
+  if (!WriteReg(0xF5, 0x08))
+  {
+    return 0;
+  }
+
+  // 温度 x2，气压 x16，Normal 模式
+  if (!WriteReg(0xF4, 0x57))
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
+uint8_t Sensor_BMP280_Read(float *temperature, float *pressure)
 {
   int32_t adc_T;
   int32_t adc_P;

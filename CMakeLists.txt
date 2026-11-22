@@ -42,22 +42,21 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
+file(GLOB USER_BSP_SOURCES CONFIGURE_DEPENDS "User/BSP/Src/*.c")
+file(GLOB USER_APP_SOURCES CONFIGURE_DEPENDS "User/App/Src/*.c")
+
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    Core/Src/t300/log.c
-    Core/Src/t300/eeprom.c
-    Core/Src/t300/flash.c
-    Core/Src/t300/aht20.c
-    Core/Src/t300/bmp280.c
-    Core/Src/t300/rm063.c
-    Core/Src/t300/led.c
-    Core/Src/t300/lan8720.c
+    ${USER_BSP_SOURCES}
+    ${USER_APP_SOURCES}
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    User/BSP/Inc
+    User/App/Inc
 )
 
 # Add project symbols (macros)
